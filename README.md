@@ -1,7 +1,8 @@
-applied-economics
+Applied Economic Forecasting
 ==============================
 
-Applied Economic Forecasting Using Time Series Methods (Python)
+
+Translations from R to Python from [Applied Economic Forecasting Using Time Series Methods By Eric Ghysels, Massimiliano Marcellino](https://books.google.com/books/about/Applied_Economic_Forecasting_Using_Time.html?id=NZNODwAAQBAJ&source=kp_book_description)
 
 Project Organization
 ------------
