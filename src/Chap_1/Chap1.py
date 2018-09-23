@@ -122,6 +122,7 @@ Durbin-Watson 	    A test for the presence of autocorrelation (that the errors a
 Cond. No 	        A test for multicollinearity (if in a fit with multiple parameters, the parameters are related with each other).
 
 """
+
 ### 1.12.1 Forecasting Euro Area GDP ###
 
 ex2_regress_gdp = r'https://storage.googleapis.com/applied-economics/ex2_regress_gdp.csv'
@@ -194,6 +195,7 @@ gdp.rec[[model]][i] < - predict(ols.rec, newdata=eu.gdp$full[44 + i])
 }
 
 """
+
 ## Static and recursive forecasts
 
 gdp_fore = {}
@@ -285,11 +287,11 @@ df_us_gdp_plot[df_us_gdp_fore.date.min(): df_us_gdp_fore.date.max()][pred_column
 
 ### 1.13.1 Forecasting default risk ###
 """
-Bank of America Merrill Lynch US High Yield Master II Option-Adjusted Spread, denoted OAS, monthly
-(a) the Chicago Board Options Exchange (CBOE) Volatility Index, denoted VIX
-(b) Surveys of Consumers, University of Michigan, consumer sentiment index, denoted SENT
-(c) the ISM Manufacturing: purcahsing managers index, PMI
-(d) the monthly returns, in percentage points, of the S&P 500 Index
+(OAS) Bank of America Merrill Lynch US High Yield Master II Option-Adjusted Spread, denoted OAS, monthly
+(VIX) the Chicago Board Options Exchange (CBOE) Volatility Index, denoted VIX
+(SENT) Surveys of Consumers, University of Michigan, consumer sentiment index, denoted SENT
+(PMI the ISM Manufacturing: purcahsing managers index, PMI
+(sp500) the monthly returns, in percentage points, of the S&P 500 Index
 
 """
 ex3_regress_oas = r'https://storage.googleapis.com/applied-economics/ex3_regress_oas.csv'
@@ -302,8 +304,8 @@ df_oas.set_index("Date").plot()
   2: 1998-02-01 2.83 18.55 110.4 52.9  7.04491930
 """
 
+# shift OAS
 df_oas[['OAS']] = df_oas[['OAS']].shift(-1)
-
 df_oas.dropna(inplace=True)
 
 """
