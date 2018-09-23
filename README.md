@@ -1,9 +1,12 @@
 Applied Economic Forecasting Using Time Series Methods
-==============================
+======================================================
 
 [Applied Economic Forecasting Using Time Series Methods By Eric Ghysels, Massimiliano Marcellino](http://didattica.unibocconi.eu/myigier/index.php?IdUte=49257&idr=29747&lingua=eng&comando=Apri)
 
-Translated to Python from R
+
+
+Chapter 1. [The Baseline Regression Model](https://github.com/ryansmccoy/applied-economics/blob/master/notebooks/Chap1.ipynb)
+
 
 Project Organization
 ------------
@@ -15,18 +18,14 @@ Project Organization
     ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
     ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
+    │   └─ Chap_1          <- Done
     │
     ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
     │                         generated with `pip freeze > requirements.txt`
     │
     ├── src                <- Source code for use in this project.
-    │   └─ Chap_1          <- Work in Progress
+    │   └─ Chap_1          <- Done
     │   └─ Chap_2          <- Work in Progress
-    │   └─ Chap_3          <- Work in Progress
-    │   └─ Chap_4          <- Work in Progress
-    │   └─ Chap_5          <- Work in Progress
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.testrun.org
 
