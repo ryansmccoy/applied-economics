@@ -4,7 +4,6 @@ Applied Economic Forecasting Using Time Series Methods
 [Applied Economic Forecasting Using Time Series Methods By Eric Ghysels, Massimiliano Marcellino](http://didattica.unibocconi.eu/myigier/index.php?IdUte=49257&idr=29747&lingua=eng&comando=Apri)
 
 
-
 Chapter 1. [The Baseline Regression Model](https://github.com/ryansmccoy/applied-economics/blob/master/notebooks/Chap1.ipynb)
 
 
@@ -19,6 +18,7 @@ Project Organization
     │
     ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
     │   └─ Chap_1          <- Done
+    │   └─ Chap_2          <- Work in Progress
     │
     ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
     │                         generated with `pip freeze > requirements.txt`
