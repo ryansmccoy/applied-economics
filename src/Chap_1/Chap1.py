@@ -86,6 +86,7 @@ print(ols_rec.summary())
 # define likelihood function
 
 """
+
 Element 	        Description
 Dep. Variable 	    Which variable is the response in the model
 Model 	            What model you are using in the fit
