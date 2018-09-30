@@ -6,28 +6,25 @@ Applied Economic Forecasting Using Time Series Methods
 
 Chapter 1. [The Baseline Regression Model](https://github.com/ryansmccoy/applied-economics/blob/master/notebooks/Chap1.ipynb)
 
+Chapter 2. [Model Mis-Specification]()
+
 
 Project Organization
 ------------
 
     ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
     │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
+    ├── README.md          <- The top-level README for developers using this project.
     │
     ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
     │   └─ Chap_1          <- Done
     │   └─ Chap_2          <- Work in Progress
     │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
     ├── src                <- Source code for use in this project.
     │   └─ Chap_1          <- Done
     │   └─ Chap_2          <- Work in Progress
     │
-    └── tox.ini            <- tox file with settings for running tox; see tox.testrun.org
+    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
 
 
 --------
