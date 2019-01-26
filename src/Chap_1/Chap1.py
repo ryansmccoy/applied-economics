@@ -251,7 +251,7 @@ us_gdp_formula =   ['y ~ ipr + su + pr + sr','y ~ ipr + su + sr','y ~ ipr + su',
 
 gdp_fit = {}
 gdp_rec = {}
-df_us_gdp_rec = pd.DataFrame(index=df_us_gdp_full.date, columns=['{}'.format(f) for f in gdp_us_formula])
+df_us_gdp_rec = pd.DataFrame(index=df_us_gdp_full.date, columns=['{}'.format(f) for f in us_gdp_formula])
 
 for i, model in enumerate(us_gdp_formula):
     gdp_fit[model] = smf.ols(formula=model, data=df_us_gdp_full).fit()

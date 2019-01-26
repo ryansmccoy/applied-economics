@@ -1,17 +1,15 @@
 from math import sqrt
 
-import numpy as np
 import pandas as pd
-import seaborn as sns
+# import seaborn as sns
+
 pd.set_option('display.float_format', lambda x: '%.5f' % x)  # pandas
 pd.set_option('display.max_columns', 100)
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.width', 600)
+
 # import seaborn as sns
-from matplotlib import pyplot as plt
 # %matplotlib inline
-import statsmodels
-import statsmodels.formula.api as smf
 import statsmodels.formula.api as smf
 import statsmodels.stats.api as sms
 from scipy import stats
@@ -43,10 +41,10 @@ sim.data$fore < - sim.data$full[302:401]  # forecasting sample
 
 sim_data = r'https://storage.googleapis.com/applied-economics/simulated_datac2.csv'
 
-df_sim_data = pd.read_csv(sim_data, header=0, index_col=0, parse_dates=True).reset_index()
+df_sim_data_full = pd.read_csv(sim_data, header=0, index_col=0, parse_dates=True).reset_index()
 
-df_sim_data_est = df_sim_data[101:301]
-df_sim_data_fore = df_sim_data[301:401]
+df_sim_data_est = df_sim_data_full[101:301]
+df_sim_data_fore = df_sim_data_full[301:401]
 
 reg = smf.ols('y ~ x', data=df_sim_data_est).fit()
 
@@ -86,13 +84,9 @@ bptest(ols.fit)
 
 # 1) Breusch-Pagan-Godfrey (BPGT) test
 
-import statsmodels.stats.api as sms
-
-sms.linear_harvey_collier(reg)
-
 name = ['Lagrange multiplier statistic','p-value','f-value','f p-value']
-bp = statsmodels.stats.diagnostic.het_breuschpagan(reg.resid, reg.model.exog)
-pd.DataFrame(name,bp)
+bptest = statsmodels.stats.diagnostic.het_breuschpagan(reg.resid, reg.model.exog)
+pd.DataFrame(name,bptest)
 
 """
 # Normality test & Histogram
@@ -188,9 +182,9 @@ summary(olsD.fit)
 
 """
 
-mod = smf.ols("income ~ C(Industry):C(years_spend)", data=df).fit()
+# mod = smf.ols("y~ D + x + D * x", data=df_sim_data_est).fit()
 
-olsD_fit = smf.ols('y ~ C(D) + x + C(D) * x', data=df_sim_data_est).fit()
+olsD_fit = smf.ols("y~ D + x + D * x", data=df_sim_data_est).fit()
 print(olsD_fit.summary())
 
 """
@@ -223,6 +217,31 @@ data.table(yhat$yD.low))),
 ggplot(yhat.plot, aes(x=rep(302: 401, 3), y = yhat, linetype = label)) +
 geom_line() + xlab('') + ylab('') + theme(legend.title = element_blank())
 
+# Recursive
+yhat$y.rec < - yhat$yD.rec < - yhat$yD.recse < - rep(0, 100)
+
+for (i in 1:100) {
+    ols.rec < - lm(y ~ x, data = sim.data$full[102:(300 + i)])
+    yhat$y.rec[i] < - predict(ols.rec, newdata=sim.data$full[301 + i])
+    olsD.rec < - lm(y~ D + x + D * x, data = sim.data$full[102:(300 + i)])
+    yhat$yD.rec[i] < - predict(olsD.rec, newdata=sim.data$full[301 + i])
+    yhat$yD.recse[i] < - sqrt(sum(olsD.rec$residuals ^ 2) / (197 + i))
+}
+
+# Plot - recursive forecasts with dummy
+ggplot(yrec.plot, aes(x=rep(302: 401, 3), y = yhat, linetype = label)) +
+geom_line() + xlab('') + ylab('') + theme(legend.title = element_blank())
+
+yrec.plot < - data.table('yhat' = rbindlist(list(data.table(yhat$yD.rec),
+data.table(yhat$yD.rec +1.96 * yhat$yD.recse),
+data.table(yhat$yD.rec -1.96 * yhat$yD.recse))),
+'label' =
+rep(c('YHAT2_REC', 'YHAT2_REC_UP', 'YHAT2_REC_LOW'),
+    each=100))
+
+ggplot(yrec.plot, aes(x=rep(302: 401, 3), y = yhat, linetype = label)) +
+geom_line() + xlab('') + ylab('') + theme(legend.title = element_blank())
+
 """
 
 from math import sqrt
@@ -235,54 +254,38 @@ df_yhat['yD.se'] = sqrt(np.sum(olsD_fit.resid ** 2) / 198)
 df_yhat['yD.up'] = df_yhat['yD'] + 1.96 * df_yhat['yD.se']
 df_yhat['yD.low'] = df_yhat['yD'] - 1.96 * df_yhat['yD.se']
 
+# Plot - y / yhat1 / yhat2
 df_yhat_plot = pd.concat([df_sim_data_fore[['y']], df_yhat[['y']], df_yhat[['yD']]], axis=1)
 df_yhat_plot.columns = ['Y', 'YHAT1', 'YHAT2']
-
 df_yhat_plot.plot()
 
+# Plot - yhat2
 df_yhat2_plot = pd.concat([df_yhat[['yD']], df_yhat[['yD.up']], df_yhat[['yD.low']]], axis=1)
 df_yhat2_plot.columns = ['YHAT2', 'YHAT2_UP', 'YHAT2_LOW']
 df_yhat2_plot.plot()
 
+df_yhat['y.rec'] = 0
+df_yhat['yD.rec'] = 0
+df_yhat['yD.recse'] = 0
+
+df_rec = pd.DataFrame(index=range(1, 101), columns=['y.rec', 'yD.rec', 'yD.recse'])
+
+# i = 0
+for i in range(0, 100):
+    # no dummy
+    ols_rec = smf.ols(formula='y ~ x', data=df_sim_data_full[101:(301 + i)]).fit()
+    df_yhat['y.rec'][301+i] = ols_rec.predict(df_sim_data_full[301 + i:(302 + i)])
+
+    # an easy way to model structural breaks or parameter instability is by introducing dummy variables
+    olsD_rec = smf.ols(formula='y ~ D + x + D * x', data = df_sim_data_full[101:(301 + i)]).fit()
+    df_yhat['yD.rec'][301+i] = olsD_rec.predict(df_sim_data_full[301 + i:(302 + i)])
+    df_yhat['yD.recse'][301+i] = sqrt(np.sum(olsD_rec.resid ** 2) / 197 + i)
+
 
 """
 
-# Recursive
-yhat$y.rec < - yhat$yD.rec < - yhat$yD.recse < - rep(0, 100)
-
-for (i in 1:100) {
-    ols.rec < - lm(y ~ x, data = sim.data$full[102:(300 + i)])
-yhat$y.rec[i] < - predict(ols.rec, newdata=sim.data$full[301 + i])
-
-olsD.rec < - lm(y
-~ D + x + D * x, data = sim.data$full[102:(300 + i)])
-yhat$yD.rec[i] < - predict(olsD.rec, newdata=sim.data$full[301 + i])
-yhat$yD.recse[i] < - sqrt(sum(olsD.rec$residuals ^ 2) / (197 + i))
-}
-
 # Plot - recursive forecasts
-yrec.plot < - data.table('yhat' = rbindlist(list(data.table(sim.data$fore[, y]),
-data.table(yhat$y.rec),
-data.table(yhat$yD.rec))),
-'label' = rep(c('Y', 'YHAT1_REC', 'YHAT2_REC'),
-              each=100))
-
-# Plot - recursive forecasts with dummy
-ggplot(yrec.plot, aes(x=rep(302: 401, 3), y = yhat, linetype = label)) +
-geom_line() + xlab('') + ylab('') + theme(legend.title = element_blank())
-
-yrec.plot < - data.table('yhat' =
-rbindlist(list(data.table(yhat$yD.rec),
-data.table(yhat$yD.rec +
-                1.96 * yhat$yD.recse),
-data.table(yhat$yD.rec -
-                1.96 * yhat$yD.recse))),
-'label' =
-rep(c('YHAT2_REC', 'YHAT2_REC_UP', 'YHAT2_REC_LOW'),
-    each=100))
-
-ggplot(yrec.plot, aes(x=rep(302: 401, 3), y = yhat, linetype = label)) +
-geom_line() + xlab('') + ylab('') + theme(legend.title = element_blank())
+yrec.plot < - data.table('yhat' = rbindlist(list(data.table(sim.data$fore[, y]), data.table(yhat$y.rec), data.table(yhat$yD.rec))),'label' = rep(c('Y', 'YHAT1_REC', 'YHAT2_REC'),each=100))
 
 # RMSE & MAE
 yhat$Y < - cbind(yhat$y, yhat$yD.rec)
@@ -291,59 +294,116 @@ MAE < - colSums(abs(yhat$Y - sim.data$fore[, y])) / 100
 error.mat < - rbind(RMSE, MAE)
 colnames(error.mat) < - c('Simple', 'Recursive')
 print(xtable(error.mat), include.rownames = T, include.colnames = T)
+
+"""
+
+# Plot - actual & recursive forecasts
+df_plot = pd.concat([df_sim_data_fore[['y']],df_yhat['y.rec'],df_yhat['yD.rec']], axis=1)
+df_plot.columns = ['Y', 'YHAT1_REC', 'YHAT2_REC']
+df_plot.plot()
+print(ols_rec.summary())
+print(olsD_rec.summary())
+plt.show()
+
+# RMSE & MAE
+df_ = pd.concat([df_yhat['y'], df_yhat['yD.rec']], axis=1)
+df_RMSE = df_.apply(lambda x: sqrt(((x - df_sim_data_fore['y'].values) ** 2).sum() / 100))
+df_MSE = df_.apply(lambda x: (x - df_sim_data_fore['y'].values).abs().sum() / 100)
+df_error = pd.DataFrame(df_RMSE).T.append(pd.DataFrame(df_MSE).T)
+df_error.columns = ['Simple', 'Recursive']
+df_error = df_error.T
+df_error.columns = ['RMSE', 'MAE']
+df_error = df_error.T
+
+"""
+       Simple  Recursive
+RMSE 47.16669   45.54340
+MAE  36.14540   36.24325
+
+
+eu.gdp < - fread('ex2_misspecification_gdp.csv')
+gdp.fit < - lm(y~ ipr + su + sr, data = eu.gdp)
+
+
+# Breusch Pagan Test
+bptest(gdp.fit)
+BP = 2.4511, df = 3, p-value = 0.4842
+
+# White test
+eu.gdp[, c('eps', 'eps2', 'ipr2', 'su2', 'sr2') :=list(gdp.fit$residuals, gdp.fit$residuals^2, ipr^2, su^2, sr^2)]
+white.fit <- lm(eps2 ~ ipr + ipr2 + ipr * su + ipr * sr + su + su2 + su * sr + sr + sr2, data = eu.gdp)
+summary(white.fit)
+
 """
 ### 2.9.1 Forecasting Euro Area GDP ###
 
 """
-eu.gdp < - fread('ex2_misspecification_gdp.csv')
-gdp.fit < - lm(y
-~ ipr + su + sr, data = eu.gdp)
-
-# Breusch Pagan Test
-bptest(gdp.fit)
-
-# White test
-eu.gdp[, c('eps', 'eps2', 'ipr2', 'su2', 'sr2'): =
-list(gdp.fit$residuals, gdp.fit$residuals ^ 2, ipr ^ 2, su ^ 2, sr ^ 2)]
-white.fit < - lm(eps2
-~ ipr + ipr2 + ipr * su + ipr * sr +
-su + su2 + su * sr + sr + sr2, data = eu.gdp)
-summary(white.fit)
 
 # Durbin-Watson test
-dwtest(gdp.fit)
+dwtest(gdp.fit)  
 
 # Breusch-Godfrey test
-bgtest(y
-~ ipr + su + sr, data = eu.gdp, order = 2, type = c('Chisq', 'F'))
-bgtest(y
-~ ipr + su + sr, data = eu.gdp, order = 3, type = c('Chisq', 'F'))
+bgtest(y ~ ipr + su + sr, data = eu.gdp, order = 2, type = c('Chisq', 'F'))
+bgtest(y ~ ipr + su + sr, data = eu.gdp, order = 3, type = c('Chisq', 'F'))
 
 # Normality test & Histogram
-hist(eu.gdp[, eps], xlab = '', ylab = '', main = '')
-jarque.bera.test(eu.gdp[, eps])
+hist(eu.gdp[, eps], xlab = '', ylab = '', main = '') 
+jarque.bera.test(eu.gdp[, eps]) 
 
 # Chow break point test
-sctest(y
-~ ipr + su + sr, data = eu.gdp, type = 'Chow',
-from = 0.1, to = 0.3)
-sctest(y
-~ ipr + su + sr, data = eu.gdp, type = 'Chow',
-from = 0.3, to = 0.7)
-sctest(y
-~ ipr + su + sr, data = eu.gdp, type = 'Chow',
-from = 0.7, to = 1)
+sctest(y ~ ipr + su + sr, data = eu.gdp, type = 'Chow', from = 0.1, to = 0.3)
+sctest(y ~ ipr + su + sr, data = eu.gdp, type = 'Chow', from = 0.3, to = 0.7)
+sctest(y ~ ipr + su + sr, data = eu.gdp, type = 'Chow', from = 0.7, to = 1)
 
-fs < - Fstats(y
-~ x, data = eu.gdp,
-from = 0.3, to = 1)
-fs < - Fstats(y
-~ x, data = eu.gdp,
-from = 0.7, to = 1)
+fs <- Fstats(y ~ x, data = eu.gdp, from = 0.3, to = 1)
+fs <- Fstats(y ~ x, data = eu.gdp, from = 0.7, to = 1)
 
 # Bai-Perron test
-breakpoints(y
-~ ipr + su + sr, data = eu.gdp, h = 0.15)
+breakpoints(y ~ ipr + su + sr, data = eu.gdp, h = 0.15)
+
+"""
+
+sim_data = r'https://storage.googleapis.com/applied-economics/ex2_misspecification_gdp.csv'
+df_eu_gdp = pd.read_csv(sim_data, header=0, index_col=0, parse_dates=True).reset_index()
+gdp_fit = smf.ols("y ~ ipr + su + sr", data=df_eu_gdp).fit()
+
+# 1) Breusch-Pagan-Godfrey (BPGT) test
+
+name = ['Lagrange multiplier statistic','p-value','f-value','f p-value']
+bptest = statsmodels.stats.diagnostic.het_breuschpagan(gdp_fit.resid, gdp_fit.model.exog)
+pd.DataFrame(name,bptest)
+
+# White test
+df_sq = pd.concat([gdp_fit.resid, gdp_fit.resid**2, df_eu_gdp[['ipr']]**2, df_eu_gdp[['su']]**2, df_eu_gdp[['sr']]**2], axis=1)
+df_sq.columns = ['eps', 'eps2', 'ipr2', 'su2', 'sr2']
+df_eu_gdp = pd.concat([df_eu_gdp, df_sq], axis=1)
+white_fit = smf.ols('eps2 ~ ipr + ipr2 + ipr * su + ipr * sr + su + su2 + su * sr + sr + sr2', data=df_eu_gdp).fit()
+print(white_fit.summary())
+
+# Normality test & Histogram
+df_eu_gdp[['eps']].plot()
+plt.show()
+
+name = ['Jarque-Bera', 'Chi^2 two-tail prob.', 'Skew', 'Kurtosis']
+test = sms.jarque_bera(df_sim_data_est['eps'])
+lzip(name, test)
+
+
+df_sq = pd.concat([df_sim_data_est['x'] **2, df_sim_data_est['eps'] **2], axis=1)
+df_sq.columns = ['x2', 'eps2']
+
+df_sim_data_est = df_sim_data_est.join(df_sq)
+
+white_fit = smf.ols('eps2 ~ x2 + x', data=df_sim_data_est).fit()
+print(white_fit.summary())
+
+statsmodels.stats.stattools.durbin_watson(ols_fit.resid)
+
+"""
+2.45110  Lagrange multiplier statistic
+0.48419                        p-value
+0.79830                        f-value
+0.49922                      f p-value
 
 # Recursive estimation
 gdp.rr < - recresid(y
@@ -352,11 +412,10 @@ plot(gdp.rr, type='l')
 
 # Dummy variable
 gdpD.fit < - list()
-gdpD.formula < - c('y ~ ipr + su + sr + Dea', 'y ~ ipr + su + sr + D2000s',
-                   'y ~ ipr + su + sr + Dea + D2000s')
+gdpD.formula < - c('y ~ ipr + su + sr + Dea', 'y ~ ipr + su + sr + D2000s','y ~ ipr + su + sr + Dea + D2000s')
 for (model in 1:3) {
     gdpD.fit[[model]] < - lm(gdpD.formula[model], data=eu.gdp)
-print(summary(gdpD.fit[[model]]))
+    print(summary(gdpD.fit[[model]]))
 }
 
 # Forecasting
@@ -365,8 +424,7 @@ gdp.fit < - lm(y
 ~ ipr + su + sr, data = eu.gdp[1:60])  # Model 2 - no dummy
 gdp.hat$ghat < - predict(gdp.fit, newdata=eu.gdp[61:70])
 
-gdp.fit < - lm(y
-~ ipr + su + sr + Dea + D2000s, data = eu.gdp[1:60])
+gdp.fit < - lm(y~ ipr + su + sr + Dea + D2000s, data = eu.gdp[1:60])
 gdp.hat$ghat3 < - predict(gdp.fit, newdata=eu.gdp[61:70])  # Model 2.3 - dummy
 
 gdp.plot < - data.table('yhat' = rbindlist(list(data.table(eu.gdp[61:70, y]),
